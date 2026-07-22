@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.3 — 2026-07-22
+
+- Browser cache busting for static assets: URLs carry a content hash
+  (`?v=…`) that changes when the file does, so CSS/JS never go stale after
+  an upgrade; static responses now cache for a year.
+
 ## 1.1.2 — 2026-07-22
 
 - Footer additions: app version and AGPL-3.0 license link (both branches);

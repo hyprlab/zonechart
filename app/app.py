@@ -1,4 +1,3 @@
-import hashlib
 import hmac
 import json
 import os
@@ -6,11 +5,15 @@ import re
 import subprocess
 import sys
 import time
+import urllib.parse
+import urllib.request
 from functools import lru_cache, wraps
 
 from flask import (Flask, abort, jsonify, redirect, render_template, request,
                    session, url_for)
+from werkzeug.security import check_password_hash, generate_password_hash
 
+import settings
 from zonechart import parse_chart
 
 CHARTS_DIR = os.environ.get("CHARTS_DIR", "/data/charts")
@@ -18,16 +21,57 @@ CHARTS_DIR = os.environ.get("CHARTS_DIR", "/data/charts")
 # dataset is fetched from the admin page
 LEGACY_CHART = os.environ.get(
     "CHART_PATH", os.path.join(os.path.dirname(__file__), "seed", "439.xls"))
-DEFAULT_ORIGIN = os.environ.get("DEFAULT_ORIGIN", "439")
+ENV_DEFAULT_ORIGIN = os.environ.get("DEFAULT_ORIGIN", "439")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 STATUS_PATH = os.environ.get("REFRESH_STATUS_PATH", "/data/refresh_status.json")
 CANCEL_PATH = STATUS_PATH + ".cancel"
+TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 
 app = Flask(__name__)
-# stable across restarts so sessions survive; derived, never stored
-app.secret_key = hashlib.sha256(
-    f"zonechart-session:{ADMIN_PASSWORD}".encode()).digest()
+app.secret_key = settings.ensure_secret_key()
 app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax")
+
+
+def check_admin_password(supplied):
+    """Dashboard-set password (hashed) wins; ADMIN_PASSWORD env is the
+    bootstrap fallback."""
+    s = settings.load()
+    if s["admin_password_hash"]:
+        return check_password_hash(s["admin_password_hash"], supplied)
+    return bool(ADMIN_PASSWORD) and hmac.compare_digest(supplied,
+                                                        ADMIN_PASSWORD)
+
+
+def default_origin():
+    s = settings.load()
+    return (s["default_origin"] or ENV_DEFAULT_ORIGIN)[:3]
+
+
+def turnstile_config():
+    s = settings.load()
+    active = bool(s["turnstile_enabled"] and s["turnstile_site_key"]
+                  and s["turnstile_secret_key"])
+    return active, s["turnstile_site_key"], s["turnstile_secret_key"]
+
+
+def verify_turnstile(token):
+    active, _, secret = turnstile_config()
+    if not active:
+        return True, None
+    if not token:
+        return False, "Please complete the human check."
+    data = urllib.parse.urlencode({
+        "secret": secret, "response": token,
+        "remoteip": request.headers.get("CF-Connecting-IP",
+                                        request.remote_addr or ""),
+    }).encode()
+    try:
+        with urllib.request.urlopen(TURNSTILE_VERIFY_URL, data,
+                                    timeout=10) as r:
+            ok = json.load(r).get("success")
+    except OSError:
+        return False, "Could not reach the verification service — try again."
+    return (True, None) if ok else (False, "Human check failed — try again.")
 
 with open(os.path.join(os.path.dirname(__file__), "prefix_states.json")) as f:
     PREFIX_STATES = json.load(f)
@@ -65,14 +109,17 @@ def normalize_origin(raw):
 
 @app.get("/")
 def index():
-    return render_template("index.html", default_origin=DEFAULT_ORIGIN)
+    return render_template("index.html", default_origin=default_origin())
 
 
 @app.get("/api/origins")
 def api_origins():
+    s = settings.load()
+    d = default_origin()
     return jsonify({
-        "default": DEFAULT_ORIGIN if DEFAULT_ORIGIN in CHARTS else
+        "default": d if d in CHARTS else
                    (sorted(CHARTS)[0] if CHARTS else None),
+        "locked": bool(s["origin_locked"]),
         "available": [
             {"prefix": p, "state": PREFIX_STATES.get(p)}
             for p in sorted(CHARTS)
@@ -83,9 +130,12 @@ def api_origins():
 
 @app.get("/api/chart")
 def api_chart():
-    prefix, zip5 = normalize_origin(request.args.get("origin", DEFAULT_ORIGIN))
+    prefix, zip5 = normalize_origin(request.args.get("origin",
+                                                     default_origin()))
     if prefix is None:
         abort(400, "origin must be a 3- or 5-digit ZIP")
+    if settings.load()["origin_locked"] and prefix != default_origin():
+        abort(403, "the origin is locked by the administrator")
     if prefix not in CHARTS:
         abort(404, f"no zone chart on file for origin prefix {prefix}")
     data = dict(chart_for(prefix))
@@ -120,16 +170,25 @@ def require_admin(f):
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
+    ts_active, ts_site_key, _ = turnstile_config()
     if request.method == "POST":
-        supplied = request.form.get("password", "")
-        if ADMIN_PASSWORD and hmac.compare_digest(supplied, ADMIN_PASSWORD):
+        human, ts_error = verify_turnstile(
+            request.form.get("cf-turnstile-response", ""))
+        if not human:
+            error = ts_error
+        elif check_admin_password(request.form.get("password", "")):
             session["admin"] = True
             return redirect(request.args.get("next") or url_for("admin"))
-        time.sleep(1)  # blunt brute-force throttle
-        error = ("Admin password not set — add ADMIN_PASSWORD to "
-                 "docker-compose.yml" if not ADMIN_PASSWORD
-                 else "That password didn't match.")
-    return render_template("login.html", error=error)
+        else:
+            time.sleep(1)  # blunt brute-force throttle
+            no_password = (not ADMIN_PASSWORD
+                           and not settings.load()["admin_password_hash"])
+            error = ("Admin password not set — add ADMIN_PASSWORD to "
+                     "docker-compose.yml" if no_password
+                     else "That password didn't match.")
+    return render_template("login.html", error=error,
+                           turnstile_site_key=ts_site_key if ts_active
+                           else None)
 
 
 @app.post("/logout")
@@ -219,6 +278,77 @@ def refresh_cancel():
         abort(409, "no refresh is running")
     open(CANCEL_PATH, "w").close()
     return jsonify({"cancelling": True})
+
+
+@app.get("/admin/settings")
+@require_admin
+def admin_settings():
+    s = settings.load()
+    return jsonify({
+        "turnstile_enabled": bool(s["turnstile_enabled"]),
+        "turnstile_site_key": s["turnstile_site_key"],
+        "turnstile_secret_set": bool(s["turnstile_secret_key"]),
+        "origin_locked": bool(s["origin_locked"]),
+        "default_origin": s["default_origin"] or ENV_DEFAULT_ORIGIN,
+        "password_customized": bool(s["admin_password_hash"]),
+    })
+
+
+@app.post("/admin/settings/frontend")
+@require_admin
+def admin_settings_frontend():
+    body = request.get_json(silent=True) or {}
+    locked = bool(body.get("origin_locked"))
+    origin = (body.get("default_origin") or "").strip()
+    updates = {"origin_locked": locked}
+    if origin:
+        prefix, _ = normalize_origin(origin)
+        if prefix is None:
+            abort(400, "origin must be a 3- or 5-digit ZIP")
+        if prefix not in CHARTS:
+            abort(400, f"no chart on file for prefix {prefix} — "
+                       "download it first")
+        updates["default_origin"] = origin
+    settings.save(updates)
+    return jsonify({"saved": True})
+
+
+@app.post("/admin/settings/turnstile")
+@require_admin
+def admin_settings_turnstile():
+    body = request.get_json(silent=True) or {}
+    enabled = bool(body.get("enabled"))
+    site_key = (body.get("site_key") or "").strip()
+    secret_key = (body.get("secret_key") or "").strip()
+    updates = {"turnstile_enabled": enabled}
+    if site_key:
+        updates["turnstile_site_key"] = site_key
+    if secret_key:  # blank leaves the stored secret unchanged
+        updates["turnstile_secret_key"] = secret_key
+    saved = settings.save(updates)
+    if enabled and not (saved["turnstile_site_key"]
+                        and saved["turnstile_secret_key"]):
+        settings.save({"turnstile_enabled": False})
+        abort(400, "both the site key and secret key are needed "
+                   "before Turnstile can be enabled")
+    return jsonify({"saved": True})
+
+
+@app.post("/admin/settings/password")
+@require_admin
+def admin_settings_password():
+    body = request.get_json(silent=True) or {}
+    current = body.get("current") or ""
+    new = body.get("new") or ""
+    if not check_admin_password(current):
+        time.sleep(1)
+        abort(403, "current password didn't match")
+    if len(new) < 8:
+        abort(400, "new password must be at least 8 characters")
+    settings.save({"admin_password_hash": generate_password_hash(new)})
+    # rotate the signing key: every session (including this one) signs out
+    app.secret_key = settings.rotate_secret_key()
+    return jsonify({"saved": True, "signed_out": True})
 
 
 if __name__ == "__main__":

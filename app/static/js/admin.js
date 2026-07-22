@@ -118,6 +118,71 @@
 
   cancelBtn.addEventListener("click", () => fetch("/admin/refresh/cancel", { method: "POST" }));
 
+  /* ---------- settings ---------- */
+  const postJSON = (url, body) => fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  function say(el, text, isError) {
+    el.textContent = text;
+    el.classList.toggle("error", !!isError);
+    if (!isError && text) setTimeout(() => { el.textContent = ""; }, 4000);
+  }
+
+  async function apiError(r, fallback) {
+    const text = await r.text();
+    const m = text.match(/<p>(.+?)<\/p>/);  // flask abort() html body
+    return (m && m[1]) || fallback;
+  }
+
+  async function loadSettings() {
+    const s = await fetch("/admin/settings").then(r => r.json());
+    $("lock-box").checked = s.origin_locked;
+    $("lock-origin").value = s.default_origin || "";
+    $("ts-box").checked = s.turnstile_enabled;
+    $("ts-site").value = s.turnstile_site_key || "";
+    $("ts-secret").placeholder = s.turnstile_secret_set ? "•••••• (saved)" : "";
+  }
+
+  $("frontend-save").addEventListener("click", async () => {
+    const r = await postJSON("/admin/settings/frontend", {
+      origin_locked: $("lock-box").checked,
+      default_origin: $("lock-origin").value.trim(),
+    });
+    say($("frontend-msg"),
+      r.ok ? "Saved." : await apiError(r, "Could not save."), !r.ok);
+  });
+
+  $("ts-save").addEventListener("click", async () => {
+    const r = await postJSON("/admin/settings/turnstile", {
+      enabled: $("ts-box").checked,
+      site_key: $("ts-site").value.trim(),
+      secret_key: $("ts-secret").value.trim(),
+    });
+    if (r.ok) $("ts-secret").value = "";
+    say($("ts-msg"),
+      r.ok ? "Saved — check the sign-in page." : await apiError(r, "Could not save."), !r.ok);
+    loadSettings();
+  });
+
+  $("pw-save").addEventListener("click", async () => {
+    const nw = $("pw-new").value, confirm = $("pw-confirm").value;
+    if (nw !== confirm)
+      return say($("pw-msg"), "New passwords don't match.", true);
+    const r = await postJSON("/admin/settings/password", {
+      current: $("pw-current").value, new: nw,
+    });
+    if (r.ok) {
+      say($("pw-msg"), "Password changed — signing you out…");
+      setTimeout(() => { location.href = "/login?next=/admin"; }, 1200);
+    } else {
+      say($("pw-msg"), await apiError(r, "Could not change the password."), true);
+    }
+  });
+
   loadInfo();
+  loadSettings();
   poll();
 })();

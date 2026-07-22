@@ -92,6 +92,25 @@ Set under `environment:` (or in a `.env` file if you build from source):
 | `CHART_PATH` | *(bundled seed)* | Fallback single chart used when `CHARTS_DIR` is empty. Defaults to the built-in origin-439 sample; point it at your own `.xls` to change the out-of-box origin. |
 | `REFRESH_STATUS_PATH` | `/data/refresh_status.json` | Where refresh progress is written. Only change if you relocate `/data`. |
 
+### Admin settings
+
+Beyond the dataset refresh, the `/admin` dashboard has persistent settings
+(stored in `data/settings.json`, surviving upgrades):
+
+- **Change password** — sets a hashed password that overrides the
+  `ADMIN_PASSWORD` env var from then on (the env var remains only as the
+  bootstrap for fresh installs). Changing it signs out every session.
+- **Cloudflare Turnstile** — optionally require a human check on the sign-in
+  page. Create a widget (type: managed) in your Cloudflare dashboard under
+  Turnstile, then paste the site key and secret key and enable it.
+  Recommended if the app is exposed beyond your LAN.
+- **Origin lock** — pin the map to a single origin ZIP and hide the frontend
+  "Change" button (enforced server-side too). Useful when you run ZoneChart
+  for one warehouse and don't want visitors switching origins.
+
+Locked out? Delete `admin_password_hash` (or the Turnstile keys) from
+`data/settings.json` and restart — the env var password applies again.
+
 Practical notes:
 
 - **Resources** — idle, the app is a small Flask process; during a refresh it

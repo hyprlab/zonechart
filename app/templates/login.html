@@ -16,11 +16,17 @@
       <label class="eyebrow" for="password">Password</label>
       <input id="password" name="password" type="password" class="mono"
              autocomplete="current-password" autofocus required>
+      {% if turnstile_site_key %}
+      <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="auto"></div>
+      {% endif %}
       {% if error %}<p class="search-msg error">{{ error }}</p>{% endif %}
       <button class="solid-btn login-btn" type="submit">Sign in</button>
       <a class="login-back" href="{{ url_for('index') }}">← Back to the map</a>
     </form>
   </main>
 </div>
+{% if turnstile_site_key %}
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% endif %}
 </body>
 </html>

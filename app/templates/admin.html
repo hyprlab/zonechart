@@ -75,6 +75,67 @@
       typically updates rates in late December.
     </p>
 
+    <section class="card settings-card">
+      <span class="eyebrow">Frontend</span>
+      <h2 class="settings-title">Origin selection</h2>
+      <label class="force-label">
+        <input type="checkbox" id="lock-box">
+        Lock the map to a single origin (hides the “Change” button)
+      </label>
+      <div class="settings-row">
+        <label class="settings-label" for="lock-origin">Origin ZIP</label>
+        <input id="lock-origin" class="mono settings-input" type="text"
+               inputmode="numeric" maxlength="5" placeholder="e.g. 43952">
+        <button id="frontend-save" class="solid-btn" type="button">Save</button>
+      </div>
+      <p class="search-msg" id="frontend-msg" role="status"></p>
+    </section>
+
+    <section class="card settings-card">
+      <span class="eyebrow">Security</span>
+      <h2 class="settings-title">Sign-in protection · Cloudflare Turnstile</h2>
+      <label class="force-label">
+        <input type="checkbox" id="ts-box">
+        Require a Turnstile check to sign in
+      </label>
+      <div class="settings-row">
+        <label class="settings-label" for="ts-site">Site key</label>
+        <input id="ts-site" class="mono settings-input" type="text"
+               autocomplete="off" spellcheck="false">
+      </div>
+      <div class="settings-row">
+        <label class="settings-label" for="ts-secret">Secret key</label>
+        <input id="ts-secret" class="mono settings-input" type="password"
+               autocomplete="off" placeholder="">
+        <button id="ts-save" class="solid-btn" type="button">Save</button>
+      </div>
+      <p class="settings-hint">Create the key pair (widget type: managed) in
+        your Cloudflare dashboard under Turnstile. Leaving the secret blank
+        keeps the stored one.</p>
+      <p class="search-msg" id="ts-msg" role="status"></p>
+
+      <h2 class="settings-title settings-title-gap">Change password</h2>
+      <div class="settings-row">
+        <label class="settings-label" for="pw-current">Current</label>
+        <input id="pw-current" class="mono settings-input" type="password"
+               autocomplete="current-password">
+      </div>
+      <div class="settings-row">
+        <label class="settings-label" for="pw-new">New</label>
+        <input id="pw-new" class="mono settings-input" type="password"
+               autocomplete="new-password" placeholder="8+ characters">
+      </div>
+      <div class="settings-row">
+        <label class="settings-label" for="pw-confirm">Confirm</label>
+        <input id="pw-confirm" class="mono settings-input" type="password"
+               autocomplete="new-password">
+        <button id="pw-save" class="solid-btn" type="button">Change</button>
+      </div>
+      <p class="settings-hint">Changing the password signs out every
+        session, including this one.</p>
+      <p class="search-msg" id="pw-msg" role="status"></p>
+    </section>
+
   </main>
 </div>
 <script src="{{ url_for('static', filename='js/admin.js') }}"></script>

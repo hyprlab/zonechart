@@ -313,6 +313,13 @@
   function updateOriginCard() {
     const o = chart.origin;
     originZipEl.textContent = o.zip5 || `${o.prefix}xx`;
+    if (origins.locked) {
+      originEditBtn.hidden = true;
+      originEditor.hidden = true;
+      originPlaceEl.textContent = `${o.state || "—"} · prefix ${o.prefix}`;
+      return;
+    }
+    originEditBtn.hidden = false;
     const n = origins.available.length;
     originPlaceEl.textContent =
       `${o.state || "—"} · prefix ${o.prefix}` +

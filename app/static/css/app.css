@@ -444,6 +444,23 @@ body {
 .run-summary.ok { color: var(--accent); font-weight: 600; }
 .run-summary.error { color: #c23b3b; font-weight: 600; }
 
+.settings-card { display: flex; flex-direction: column; gap: 10px; }
+.settings-title {
+  font-family: var(--display); font-weight: 600; font-size: 20px;
+  margin: 2px 0 0;
+}
+.settings-title-gap { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hairline); }
+.settings-row { display: flex; align-items: center; gap: 10px; }
+.settings-label { font-size: 12.5px; color: var(--ink-2); min-width: 74px; }
+.settings-input {
+  flex: 1; min-width: 0; max-width: 380px;
+  padding: 7px 10px;
+  border: 1px solid var(--hairline); border-radius: 8px;
+  background: var(--page); color: var(--ink);
+  font-size: 13.5px;
+}
+.settings-hint { font-size: 11.5px; color: var(--muted); margin: 0; }
+
 .prefix-grid-wrap { margin-top: 16px; }
 .prefix-grid {
   display: grid;

@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Admin settings, persisted to `data/settings.json`:
+  - Change the admin password from the dashboard (hashed; overrides the
+    `ADMIN_PASSWORD` env bootstrap; rotates the session key so all
+    sessions sign out).
+  - Optional Cloudflare Turnstile human check on the sign-in page.
+  - Origin lock: pin the map to a single origin and hide the frontend
+    origin switcher (enforced server-side).
+
 ## 1.0.0 — 2026-07-22
 
 Initial release.

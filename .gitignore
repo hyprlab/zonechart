@@ -1,0 +1,7 @@
+.env
+data/
+temp/
+scripts/node_modules/
+scripts/package-lock.json
+__pycache__/
+*.pyc

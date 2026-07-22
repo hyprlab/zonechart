@@ -1,0 +1,18 @@
+services:
+  web:
+    image: hyprlab/zonechart:latest
+    build: .
+    ports:
+      - "8093:8000"
+    volumes:
+      - ./data:/data
+    environment:
+      # set in .env (see .env.example) — protects the /admin dashboard
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+      DEFAULT_ORIGIN: ${DEFAULT_ORIGIN:-439}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

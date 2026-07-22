@@ -1,0 +1,8 @@
+.git
+.env
+data
+temp
+docs
+scripts
+README.md
+CHANGELOG.md

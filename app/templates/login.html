@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · ZoneChart</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
+</head>
+<body>
+<div class="app login-app">
+  <main class="login-wrap">
+    <form class="card login-card" method="post">
+      <span class="eyebrow">ZoneChart · admin</span>
+      <h1 class="login-title">Sign in</h1>
+      <label class="eyebrow" for="password">Password</label>
+      <input id="password" name="password" type="password" class="mono"
+             autocomplete="current-password" autofocus required>
+      {% if error %}<p class="search-msg error">{{ error }}</p>{% endif %}
+      <button class="solid-btn login-btn" type="submit">Sign in</button>
+      <a class="login-back" href="{{ url_for('index') }}">← Back to the map</a>
+    </form>
+  </main>
+</div>
+</body>
+</html>

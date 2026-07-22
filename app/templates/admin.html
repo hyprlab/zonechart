@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · ZoneChart</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
+</head>
+<body>
+<div class="app">
+
+  <header class="masthead">
+    <div class="masthead-title">
+      <span class="eyebrow">ZoneChart · admin</span>
+      <h1>Rate data</h1>
+    </div>
+    <div class="masthead-right admin-nav">
+      <a class="ghost-btn" href="{{ url_for('index') }}">← Map</a>
+      <form method="post" action="{{ url_for('logout') }}">
+        <button class="ghost-btn" type="submit">Sign out</button>
+      </form>
+    </div>
+  </header>
+
+  <main class="admin-layout">
+
+    <section class="card refresh-card">
+      <div class="refresh-head">
+        <div>
+          <span class="eyebrow">Zone charts on file</span>
+          <div class="stat-row">
+            <span class="stat-num mono" id="stat-charts">—</span>
+            <span class="stat-of" id="stat-of">of — mapped prefixes</span>
+          </div>
+          <div class="stat-sub" id="stat-age">—</div>
+        </div>
+        <div class="refresh-actions">
+          <label class="force-label">
+            <input type="checkbox" id="force-box"> Force full re-download
+          </label>
+          <button class="solid-btn" id="refresh-btn" type="button">Refresh charts</button>
+          <button class="ghost-btn" id="cancel-btn" type="button" hidden>Cancel</button>
+        </div>
+      </div>
+
+      <div class="progress-wrap" id="progress-wrap" hidden>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="progress-meta">
+          <span id="progress-label">—</span>
+          <span class="mono" id="progress-current"></span>
+        </div>
+      </div>
+
+      <div class="run-summary" id="run-summary"></div>
+
+      <div class="prefix-grid-wrap">
+        <div class="prefix-grid" id="prefix-grid" aria-label="Per-prefix download status"></div>
+        <div class="grid-legend">
+          <span><i class="cell-swatch sw-done"></i> downloaded</span>
+          <span><i class="cell-swatch sw-cached"></i> already current</span>
+          <span><i class="cell-swatch sw-active"></i> fetching</span>
+          <span><i class="cell-swatch sw-missing"></i> unavailable</span>
+          <span><i class="cell-swatch sw-pending"></i> queued</span>
+        </div>
+      </div>
+    </section>
+
+    <p class="fine-print">
+      Refresh re-downloads the official chart for every origin prefix from
+      ups.com through the app’s built-in browser engine, pacing requests a
+      couple of seconds apart — a full forced run takes about 45 minutes.
+      Without “force” it only fetches charts that are missing or invalid.
+      New charts go live in the app the moment the run finishes. UPS
+      typically updates rates in late December.
+    </p>
+
+  </main>
+</div>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>

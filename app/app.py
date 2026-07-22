@@ -1,3 +1,4 @@
+import hashlib
 import hmac
 import json
 import os
@@ -30,7 +31,36 @@ TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverif
 
 app = Flask(__name__)
 app.secret_key = settings.ensure_secret_key()
-app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax")
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax",
+                  SEND_FILE_MAX_AGE_DEFAULT=31536000)
+
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+
+
+@lru_cache(maxsize=None)
+def _asset_tag(filename):
+    """Short content hash for cache busting — the URL changes exactly when
+    the file does, so static responses can be cached hard (1 year)."""
+    try:
+        with open(os.path.join(STATIC_DIR, filename), "rb") as f:
+            return hashlib.sha1(f.read()).hexdigest()[:8]
+    except OSError:
+        return __version__
+
+
+@app.url_defaults
+def _static_cache_bust(endpoint, values):
+    if endpoint == "static" and "filename" in values:
+        values.setdefault("v", _asset_tag(values["filename"]))
+
+
+@app.after_request
+def _untagged_static_cache(resp):
+    # assets fetched without a ?v tag (e.g. the geo files loaded from JS)
+    # must not inherit the year-long lifetime — revalidate daily via ETag
+    if request.path.startswith("/static/") and "v" not in request.args:
+        resp.headers["Cache-Control"] = "public, max-age=86400"
+    return resp
 
 
 def check_admin_password(supplied):

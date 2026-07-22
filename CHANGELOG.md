@@ -1,14 +1,18 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 — 2026-07-22
 
-- Admin settings, persisted to `data/settings.json`:
-  - Change the admin password from the dashboard (hashed; overrides the
-    `ADMIN_PASSWORD` env bootstrap; rotates the session key so all
-    sessions sign out).
-  - Optional Cloudflare Turnstile human check on the sign-in page.
-  - Origin lock: pin the map to a single origin and hide the frontend
-    origin switcher (enforced server-side).
+Admin settings, persisted to `data/settings.json` (survive upgrades):
+
+- **Change the admin password** from the dashboard — stored hashed,
+  overrides the `ADMIN_PASSWORD` env bootstrap, and rotates the session
+  signing key so every session signs out.
+- **Cloudflare Turnstile** — optional human check on the sign-in page,
+  verified server-side.
+- **Origin lock** — pin the map to a single origin and hide the frontend
+  origin switcher; enforced server-side in the API.
+- Lockout recovery: delete the relevant keys from `data/settings.json`
+  and restart (documented in the README).
 
 ## 1.0.0 — 2026-07-22
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1 — 2026-07-22
+
+- Footer branding on the main branch: "Built by Hyprlab" + Buy Me a Coffee
+  link. An unbranded variant without either is maintained on the
+  `unbranded` branch and published as `hyprlab/zonechart-unbranded`.
+
 ## 1.1.0 — 2026-07-22
 
 Admin settings, persisted to `data/settings.json` (survive upgrades):

@@ -157,6 +157,12 @@ The stack: Flask + gunicorn, openpyxl/xlrd for parsing, D3 for the map,
 Playwright + Chromium for the dataset refresher. No database — the chart
 files are the data store.
 
+## Unbranded variant
+
+Prefer no footer branding? The [`unbranded`
+branch](https://github.com/hyprlab/zonechart/tree/unbranded) is identical
+minus the footer, published as `hyprlab/zonechart-unbranded` on Docker Hub.
+
 ## License
 
 [AGPL-3.0](LICENSE). ZoneChart is an independent tool, not affiliated with

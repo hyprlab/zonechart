@@ -14,6 +14,7 @@ from flask import (Flask, abort, jsonify, redirect, render_template, request,
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import settings
+from version import __version__
 from zonechart import parse_chart
 
 CHARTS_DIR = os.environ.get("CHARTS_DIR", "/data/charts")
@@ -109,7 +110,8 @@ def normalize_origin(raw):
 
 @app.get("/")
 def index():
-    return render_template("index.html", default_origin=default_origin())
+    return render_template("index.html", default_origin=default_origin(),
+                           version=__version__)
 
 
 @app.get("/api/origins")
@@ -151,7 +153,7 @@ def api_chart():
 
 @app.get("/healthz")
 def healthz():
-    return {"status": "ok", "charts": len(CHARTS)}
+    return {"status": "ok", "charts": len(CHARTS), "version": __version__}
 
 
 # ---------- admin ----------

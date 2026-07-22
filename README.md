@@ -157,11 +157,18 @@ The stack: Flask + gunicorn, openpyxl/xlrd for parsing, D3 for the map,
 Playwright + Chromium for the dataset refresher. No database — the chart
 files are the data store.
 
-## Unbranded variant
+## Branding & unbranded variant
 
-Prefer no footer branding? The [`unbranded`
+The main image carries a small footer — Hyprlab attribution, a
+[Buy me a coffee](https://buymeacoffee.com/hyprlab) link, the app version,
+license, and repo links:
+
+![ZoneChart footer](docs/footer.png)
+
+Prefer no branding? The [`unbranded`
 branch](https://github.com/hyprlab/zonechart/tree/unbranded) is identical
-minus the footer, published as `hyprlab/zonechart-unbranded` on Docker Hub.
+minus the attribution and coffee link (version and license remain),
+published as `hyprlab/zonechart-unbranded` on Docker Hub.
 
 ## License
 

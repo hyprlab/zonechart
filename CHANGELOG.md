@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.2 — 2026-07-22
+
+- Footer additions: app version and AGPL-3.0 license link (both branches);
+  GitHub and Docker Hub icon links (main branch).
+- `/healthz` now reports the version.
+
 ## 1.1.1 — 2026-07-22
 
 - Footer branding on the main branch: "Built by Hyprlab" + Buy Me a Coffee

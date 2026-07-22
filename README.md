@@ -1,4 +1,9 @@
-# ZoneChart
+# ZoneChart (unbranded)
+
+This is the **unbranded branch** of ZoneChart — identical to `main` minus the
+footer branding. Docker image: `hyprlab/zonechart-unbranded`. All docs below
+apply; substitute the image name in the compose file.
+
 
 **See where it lands, and when.** ZoneChart turns UPS's per-origin zone chart
 spreadsheets into an interactive US map: pick any origin ZIP, and every
@@ -35,7 +40,7 @@ No clone needed — save this as `docker-compose.yml` in an empty directory:
 ```yaml
 services:
   zonechart:
-    image: hyprlab/zonechart:latest
+    image: hyprlab/zonechart-unbranded:latest
     container_name: zonechart
     ports:
       # host:container — change 8093 if that port is taken; the app always

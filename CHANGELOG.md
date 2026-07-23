@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.4 — 2026-07-23
+
+- Masthead cleanup: removed the "Where does it land, and when?" title;
+  "ZoneChart · UPS time-in-transit" is now the heading — normal case,
+  ink-colored, and larger.
+
 ## 1.1.3 — 2026-07-22
 
 - Browser cache busting for static assets: URLs carry a content hash
